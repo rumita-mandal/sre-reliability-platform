@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sre-app-config
+  namespace: sre-platform
+  labels:
+    app.kubernetes.io/name: sre-app
+data:
+  NODE_ENV: "production"
+  LOG_LEVEL: "info"
+  CHAOS_ENABLED: "false"
+  SHUTDOWN_DELAY_MS: "5000"
+  SHUTDOWN_TIMEOUT_MS: "25000"

@@ -1,0 +1,22 @@
+{
+  "name": "sre-reliability-platform",
+  "version": "1.0.0",
+  "description": "Production-style Node.js service demonstrating SRE/DevOps practices: observability, SLOs, CI/CD, containers and Kubernetes.",
+  "main": "src/server.js",
+  "private": true,
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test",
+    "check": "node --check src/server.js && node --check src/app.js && node --check src/config.js && node --check src/logger.js && node --check src/metrics.js",
+    "smoke": "sh scripts/smoke.sh"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "prom-client": "^15.1.3"
+  }
+}

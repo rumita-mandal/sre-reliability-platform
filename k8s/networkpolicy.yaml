@@ -1,0 +1,15 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: sre-app
+  namespace: sre-platform
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: sre-app
+  policyTypes:
+    - Ingress
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: 3000

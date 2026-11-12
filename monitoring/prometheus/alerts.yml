@@ -1,0 +1,109 @@
+groups:
+  # ---------------------------------------------------------------------------
+  # Recording rules: pre-computed SLI ratios used by dashboards and alerts.
+  # SLO: 99.5% of requests succeed (non-5xx) over 30 days. Error budget = 0.5%.
+  # ---------------------------------------------------------------------------
+  - name: sre-slo-recording
+    rules:
+      - record: sli:http_error_ratio:rate5m
+        expr: |
+          sum(rate(http_requests_total{job="sre-app",status_code=~"5.."}[5m]))
+          /
+          clamp_min(sum(rate(http_requests_total{job="sre-app"}[5m])), 1e-9)
+
+      - record: sli:http_error_ratio:rate30m
+        expr: |
+          sum(rate(http_requests_total{job="sre-app",status_code=~"5.."}[30m]))
+          /
+          clamp_min(sum(rate(http_requests_total{job="sre-app"}[30m])), 1e-9)
+
+      - record: sli:http_error_ratio:rate1h
+        expr: |
+          sum(rate(http_requests_total{job="sre-app",status_code=~"5.."}[1h]))
+          /
+          clamp_min(sum(rate(http_requests_total{job="sre-app"}[1h])), 1e-9)
+
+      - record: sli:http_error_ratio:rate6h
+        expr: |
+          sum(rate(http_requests_total{job="sre-app",status_code=~"5.."}[6h]))
+          /
+          clamp_min(sum(rate(http_requests_total{job="sre-app"}[6h])), 1e-9)
+
+      - record: sli:http_latency_p95_seconds:rate5m
+        expr: |
+          histogram_quantile(0.95,
+            sum by (le) (rate(http_request_duration_seconds_bucket{job="sre-app"}[5m])))
+
+  # ---------------------------------------------------------------------------
+  # Alerts: multi-window, multi-burn-rate (Google SRE Workbook, ch. 5).
+  # Budget fraction = 0.005, so burn rate N means error ratio > N * 0.005.
+  # ---------------------------------------------------------------------------
+  - name: sre-slo-alerts
+    rules:
+      - alert: ErrorBudgetFastBurn
+        expr: |
+          sli:http_error_ratio:rate5m > (14.4 * 0.005)
+          and
+          sli:http_error_ratio:rate1h > (14.4 * 0.005)
+        for: 2m
+        labels:
+          severity: page
+        annotations:
+          summary: "Fast error-budget burn (14.4x)"
+          description: "Error ratio is {{ $value | humanizePercentage }}. At this rate the 30-day budget is gone in about 2 days. See docs/RUNBOOK.md."
+          runbook_url: "docs/RUNBOOK.md#high-error-rate"
+
+      - alert: ErrorBudgetSlowBurn
+        expr: |
+          sli:http_error_ratio:rate30m > (6 * 0.005)
+          and
+          sli:http_error_ratio:rate6h > (6 * 0.005)
+        for: 15m
+        labels:
+          severity: ticket
+        annotations:
+          summary: "Slow error-budget burn (6x)"
+          description: "Sustained elevated error ratio ({{ $value | humanizePercentage }}). Investigate during business hours."
+          runbook_url: "docs/RUNBOOK.md#high-error-rate"
+
+  - name: sre-service-alerts
+    rules:
+      - alert: ServiceDown
+        expr: up{job="sre-app"} == 0
+        for: 1m
+        labels:
+          severity: page
+        annotations:
+          summary: "Service {{ $labels.instance }} is down"
+          description: "Prometheus cannot scrape {{ $labels.instance }} for over 1 minute."
+          runbook_url: "docs/RUNBOOK.md#service-down"
+
+      - alert: HighLatencyP95
+        expr: sli:http_latency_p95_seconds:rate5m > 0.5
+        for: 10m
+        labels:
+          severity: ticket
+        annotations:
+          summary: "p95 latency above 500ms"
+          description: "p95 latency is {{ $value | humanizeDuration }} over the last 5 minutes."
+          runbook_url: "docs/RUNBOOK.md#high-latency"
+
+      - alert: HighMemoryUsage
+        expr: process_resident_memory_bytes{job="sre-app"} > 400 * 1024 * 1024
+        for: 10m
+        labels:
+          severity: ticket
+        annotations:
+          summary: "Resident memory above 400MiB"
+          description: "{{ $labels.instance }} is using {{ $value | humanize1024 }}B. Possible memory leak."
+          runbook_url: "docs/RUNBOOK.md#high-memory"
+
+      - alert: EventLoopLagHigh
+        expr: nodejs_eventloop_lag_p99_seconds{job="sre-app"} > 0.1
+        for: 5m
+        labels:
+          severity: ticket
+        annotations:
+          summary: "Node.js event loop p99 lag above 100ms"
+          description: "The event loop is saturated or blocked on {{ $labels.instance }}."
+          runbook_url: "docs/RUNBOOK.md#high-latency"

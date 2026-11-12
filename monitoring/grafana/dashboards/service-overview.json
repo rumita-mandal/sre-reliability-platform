@@ -1,0 +1,179 @@
+{
+  "uid": "sre-service-overview",
+  "title": "Service Overview (RED + SLO)",
+  "tags": ["sre", "slo"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Request rate (req/s)",
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "sum(rate(http_requests_total{job=\"sre-app\"}[5m]))" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Error ratio (5xx, 5m)",
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "sli:http_error_ratio:rate5m" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 0.005 },
+              { "color": "red", "value": 0.02 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": { "colorMode": "background" }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "p95 latency (5m)",
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "sli:http_latency_p95_seconds:rate5m" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 0.25 },
+              { "color": "red", "value": 0.5 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": { "colorMode": "background" }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Availability SLI (1h)",
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "1 - sli:http_error_ratio:rate1h" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 3,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "orange", "value": 0.99 },
+              { "color": "green", "value": 0.995 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": { "colorMode": "background" }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Requests by status code",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 5 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (status_code) (rate(http_requests_total{job=\"sre-app\"}[1m]))",
+          "legendFormat": "{{status_code}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Latency percentiles",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 5 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(http_request_duration_seconds_bucket{job=\"sre-app\"}[5m])))",
+          "legendFormat": "p50"
+        },
+        {
+          "refId": "B",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{job=\"sre-app\"}[5m])))",
+          "legendFormat": "p95"
+        },
+        {
+          "refId": "C",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{job=\"sre-app\"}[5m])))",
+          "legendFormat": "p99"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Error budget burn rate (1.0 = on budget)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 13 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sli:http_error_ratio:rate1h / 0.005",
+          "legendFormat": "1h burn rate"
+        },
+        {
+          "refId": "B",
+          "expr": "sli:http_error_ratio:rate6h / 0.005",
+          "legendFormat": "6h burn rate"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "none" }, "overrides": [] }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Memory and event loop lag",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 13 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "process_resident_memory_bytes{job=\"sre-app\"}",
+          "legendFormat": "RSS bytes"
+        },
+        {
+          "refId": "B",
+          "expr": "nodejs_eventloop_lag_p99_seconds{job=\"sre-app\"}",
+          "legendFormat": "event loop p99 lag (s)"
+        }
+      ],
+      "fieldConfig": { "defaults": {}, "overrides": [] }
+    }
+  ]
+}
