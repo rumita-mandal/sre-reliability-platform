@@ -1,11 +1,11 @@
 # SRE Reliability Platform
 
-[![CI](https://github.com/rumita-mmandal/sre-reliability-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/rumita-mmandal/sre-reliability-platform/actions/workflows/ci.yml)
+[![CI](https://github.com/rumita-mandal/sre-reliability-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/rumita-mandal/sre-reliability-platform/actions/workflows/ci.yml)
 
 A production-style Node.js service built to demonstrate **Site Reliability Engineering / DevOps** skills:
 observability, SLOs and error budgets, CI/CD, containers, Kubernetes, graceful shutdown and incident response.
 
-> Replace `rumita-mmandal/sre-reliability-platform` in this README, `k8s/deployment.yaml` with your GitHub username and repository name.
+> Replace `rumita-mandal/sre-reliability-platform` in this README, `k8s/deployment.yaml` with your GitHub username and repository name.
 
 ## What this demonstrates
 
@@ -98,7 +98,7 @@ Free instances sleep after inactivity, so the first request can take about a min
 ## Deploy to Kubernetes
 
 ```bash
-# 1. Set your image in k8s/deployment.yaml (ghcr.io/rumita-mmandal/sre-reliability-platform:latest)
+# 1. Set your image in k8s/deployment.yaml (ghcr.io/rumita-mandal/sre-reliability-platform:latest)
 # 2. Apply everything
 kubectl apply -k k8s/
 kubectl rollout status deploy/sre-app -n sre-platform

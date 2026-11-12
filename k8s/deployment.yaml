@@ -41,9 +41,9 @@ spec:
               app.kubernetes.io/name: sre-app
       containers:
         - name: app
-          # Replace rumita-mmandal/sre-reliability-platform with your GitHub path. Prefer an immutable tag
+          # Replace rumita-mandal/sre-reliability-platform with your GitHub path. Prefer an immutable tag
           # (e.g. sha-abc1234) over :latest in real deployments.
-          image: ghcr.io/rumita-mmandal/sre-reliability-platform:latest
+          image: ghcr.io/rumita-mandal/sre-reliability-platform:latest
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
